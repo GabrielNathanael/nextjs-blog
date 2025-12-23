@@ -65,7 +65,7 @@ export async function PUT(
       where: { id: post.id },
       data: {
         title: body.title || post.title,
-        shortDesc: body.shortDesc || post.shortDesc, // ✅ Bisa update shortDesc
+        shortDesc: body.shortDesc || post.shortDesc,
         content: body.content || post.content,
         thumbnail: body.thumbnail || post.thumbnail,
         categoryId: body.categoryId || post.categoryId,
