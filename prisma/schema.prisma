@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+
 }
 
 model User {
@@ -31,7 +31,9 @@ model Post {
   hashId     String   @unique
   content    String
   thumbnail  String
+  published  Boolean  @default(false)  
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt       
   authorId   Int
   categoryId Int
   shortDesc  String   @db.VarChar(120)

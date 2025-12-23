@@ -1,93 +1,35 @@
-// src/app/api/posts/route.ts
-import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import crypto from "crypto";
+import { NextRequest, NextResponse } from "next/server";
 
-// GET: Ambil semua post atau filter by kategori
-export async function GET(req: Request) {
+import { PostService, PostFilters } from "@/lib/services/post.service";
+
+// GET /api/posts - Get all posts (with filtering and pagination)
+export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const category = searchParams.get("category");
+    const { searchParams } = new URL(request.url);
+    const categoryId = searchParams.get("categoryId");
+    const published = searchParams.get("published");
+    const search = searchParams.get("search");
+    const limit = searchParams.get("limit");
+    const page = searchParams.get("page");
 
-    const posts = await prisma.post.findMany({
-      where: category
-        ? {
-            category: {
-              name: {
-                equals: category,
-                mode: "insensitive",
-              },
-            },
-          }
-        : undefined,
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        hashId: true,
-        content: true,
-        shortDesc: true,
-        thumbnail: true,
-        createdAt: true,
-        author: { select: { name: true } },
-        category: { select: { name: true } },
-      },
-    });
+    const filters: PostFilters = {
+      categoryId: categoryId ? parseInt(categoryId) : undefined,
+      published: published ? published === "true" : undefined,
+      search: search || undefined,
+      limit: limit ? parseInt(limit) : 10,
+      page: page ? parseInt(page) : 1,
+    };
 
-    return NextResponse.json(posts);
-  } catch (error) {
-    console.error(error);
+    const result = await PostService.getPosts(filters);
+
+    return NextResponse.json(result);
+  } catch (error: unknown) {
+    console.error("GET /api/posts error:", error);
     return NextResponse.json(
-      { error: "Gagal mengambil post" },
+      {
+        error: error instanceof Error ? error.message : "Failed to fetch posts",
+      },
       { status: 500 }
     );
-  }
-}
-
-// POST: Tambah post baru
-export async function POST(req: Request) {
-  try {
-    const body = await req.json();
-    const { title, shortDesc, content, thumbnail, authorId, categoryId } = body;
-
-    if (
-      !title ||
-      !shortDesc ||
-      !content ||
-      !thumbnail ||
-      !authorId ||
-      !categoryId
-    ) {
-      return NextResponse.json(
-        { error: "Data tidak lengkap" },
-        { status: 400 }
-      );
-    }
-
-    const slug = title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)+/g, "");
-
-    const hashId = crypto.randomBytes(4).toString("hex");
-
-    const newPost = await prisma.post.create({
-      data: {
-        title,
-        slug,
-        hashId,
-        shortDesc,
-        content,
-        thumbnail,
-        authorId,
-        categoryId,
-      },
-    });
-
-    return NextResponse.json(newPost, { status: 201 });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Gagal membuat post" }, { status: 500 });
   }
 }

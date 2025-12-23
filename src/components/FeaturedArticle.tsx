@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 interface FeaturedArticleProps {
   image: string;
   category: string;
@@ -17,11 +19,9 @@ export default function FeaturedArticle({
       {" "}
       <div className="flex flex-col lg:flex-row gap-4 lg:gap-8 border border-gray-200 rounded-lg overflow-hidden transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl group-hover:border-gray-300 bg-white w-full cursor-pointer">
         {" "}
-        <img
-          src={image}
-          alt={title}
-          className="w-full lg:w-2/5 h-64 lg:h-80 object-cover"
-        />{" "}
+        <div className="relative w-full lg:w-2/5 h-64 lg:h-80">
+          <Image src={image} alt={title} fill className="object-cover" />
+        </div>{" "}
         <div className="flex flex-col justify-center p-4 flex-1 min-w-0">
           {" "}
           <span className="text-xs md:text-sm text-gray-500 font-medium mb-2 lg:mb-3">

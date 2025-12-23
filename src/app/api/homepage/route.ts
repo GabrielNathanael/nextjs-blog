@@ -1,46 +1,21 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { PostService } from "@/lib/services/post.service";
 
+// GET /api/homepage - Get homepage data
 export async function GET() {
   try {
-    // get semua artikel, urutkan terbaru
-    const posts = await prisma.post.findMany({
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        hashId: true,
-        content: true,
-        thumbnail: true,
-        createdAt: true,
-        author: { select: { name: true } },
-        category: { select: { name: true } },
-      },
-    });
+    const data = await PostService.getHomepageData();
 
-    if (posts.length === 0) {
-      return NextResponse.json({
-        featured: null,
-        highlights: [],
-        grid: [],
-      });
-    }
-
-    // Bagi data
-    const featured = posts[0]; // Artikel pertama
-    const highlights = posts.slice(1, 4); // 3–4 artikel setelah featured
-    const grid = posts.slice(4); // Sisanya
-
-    return NextResponse.json({
-      featured,
-      highlights,
-      grid,
-    });
-  } catch (error) {
-    console.error(error);
+    return NextResponse.json(data);
+  } catch (error: unknown) {
+    console.error("GET /api/homepage error:", error);
     return NextResponse.json(
-      { error: "Gagal mengambil data homepage" },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch homepage data",
+      },
       { status: 500 }
     );
   }

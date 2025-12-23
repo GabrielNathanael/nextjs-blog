@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 interface Article {
   id: number;
   title: string;
@@ -10,11 +12,14 @@ interface Article {
 export default function ArticleCard({ article }: { article: Article }) {
   return (
     <div className="bg-white shadow rounded-lg overflow-hidden hover:shadow-lg transition group">
-      <img
-        src={article.image}
-        alt={article.title}
-        className="w-full h-48 object-cover"
-      />
+      <div className="relative w-full h-48">
+        <Image
+          src={article.image}
+          alt={article.title}
+          fill
+          className="object-cover"
+        />
+      </div>
       <div className="p-4">
         <span className="text-xs text-gray-500 font-medium">
           {article.category}

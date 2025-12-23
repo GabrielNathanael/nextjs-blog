@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 interface MiniArticleCardProps {
   image: string;
   category: string;
@@ -13,15 +15,13 @@ export default function MiniArticleCard({
   date,
 }: MiniArticleCardProps) {
   return (
-    <div className="group relative">
+    <div className="group relative h-full">
       {" "}
-      <div className="flex border border-gray-200 rounded-lg overflow-hidden transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:border-gray-300 bg-white w-full cursor-pointer">
+      <div className="flex border border-gray-200 rounded-lg overflow-hidden transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:border-gray-300 bg-white w-full cursor-pointer h-full">
         {" "}
-        <img
-          src={image}
-          alt={title}
-          className="w-28 object-cover flex-shrink-0"
-        />{" "}
+        <div className="relative w-28 flex-shrink-0">
+          <Image src={image} alt={title} fill className="object-cover" />
+        </div>{" "}
         <div className="flex flex-col justify-center p-2 flex-1 min-w-0">
           {" "}
           <span className="text-xs text-gray-500 font-medium mb-1">

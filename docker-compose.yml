@@ -2,15 +2,15 @@ version: "3.8"
 
 services:
   postgres:
-    image: postgres:15
-    container_name: miniblog-postgres
+    image: postgres:16
+    container_name: postgres_db
     restart: unless-stopped
+    ports:
+      - "5433:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 1234
       POSTGRES_DB: miniblog
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
