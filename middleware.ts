@@ -25,9 +25,6 @@ export const config = {
   matcher: [
     "/editor/:path*",
     "/dashboard/:path*",
-    "/api/posts/:path*",
-    "/api/categories/:path*",
-    "/api/upload/:path*",
-    "/api/newsletter/send/:path*",
+    "/api/dashboard/:path*", // Protect semua endpoint dashboard
   ],
 };

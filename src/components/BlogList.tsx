@@ -1,10 +1,10 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import ArticleCard from "./ArticleCard";
 import Newsletter from "./Newsletter";
 import EmptyState from "./EmptyState";
-import Link from "next/link";
 
 interface Post {
   id: number;
@@ -19,7 +19,6 @@ interface Post {
 interface Category {
   id: number;
   name: string;
-  _count: { posts: number };
 }
 
 interface Pagination {
@@ -34,6 +33,7 @@ interface BlogListProps {
   pagination: Pagination;
   categories: Category[];
   currentCategoryId?: number;
+  currentCategory?: string;
   currentSearch?: string;
 }
 
@@ -42,84 +42,89 @@ export default function BlogList({
   pagination,
   categories,
   currentCategoryId,
+  currentCategory,
   currentSearch,
 }: BlogListProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const handleCategoryChange = (categoryId?: number) => {
+  const updateParams = (updates: Record<string, string | null>) => {
     const params = new URLSearchParams(searchParams.toString());
 
-    if (categoryId) {
-      params.set("categoryId", categoryId.toString());
-    } else {
-      params.delete("categoryId");
-    }
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null) params.delete(key);
+      else params.set(key, value);
+    });
 
-    // Reset to page 1 when changing category
-    params.delete("page");
-
-    router.push(`/articles?${params.toString()}`);
-  };
-
-  const handlePageChange = (page: number) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("page", page.toString());
     router.push(`/articles?${params.toString()}`);
   };
 
   return (
-    <section className="py-12 md:py-16">
-      <div className="max-w-7xl mx-auto px-4 md:px-8">
-        {/* Header */}
-        <div className="text-center mb-8 md:mb-12">
-          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2">
-            ALL ARTICLES
+    <section className="py-20 md:py-28">
+      <div className="max-w-6xl mx-auto px-4">
+        {/* Personal Editorial Header */}
+        <header className="mb-16 text-center">
+          <h1 className="text-3xl md:text-5xl font-semibold tracking-tight text-gray-900 mb-5">
+            Notes & Writing
           </h1>
+          <p className="text-gray-600 max-w-2xl mx-auto leading-relaxed">
+            A personal collection of thoughts, lessons, experiments, and things
+            I don’t want to forget.
+          </p>
+
           {currentSearch && (
-            <p className="text-gray-600">
-              Search results for:{" "}
-              <span className="font-semibold">&quot;{currentSearch}&quot;</span>
+            <p className="mt-5 text-sm text-gray-500">
+              Searching for{" "}
+              <span className="font-medium">“{currentSearch}”</span>
             </p>
           )}
-        </div>
+        </header>
 
-        {/* Category Filter */}
-        <div className="flex flex-wrap justify-center gap-2 mb-8 md:mb-12">
+        {/* Category Navigation – personal tone */}
+        <nav className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm mb-20">
           <button
-            onClick={() => handleCategoryChange()}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              !currentCategoryId
-                ? "bg-gray-900 text-white"
-                : "bg-white text-gray-900 border border-gray-300 hover:bg-gray-50"
+            onClick={() =>
+              updateParams({ categoryId: null, category: null, page: null })
+            }
+            className={`transition-colors ${
+              !currentCategoryId && !currentCategory
+                ? "text-gray-900 font-medium underline underline-offset-4"
+                : "text-gray-400 hover:text-gray-700"
             }`}
           >
-            All Categories
+            All
           </button>
-          {categories.map((category) => (
+
+          {categories.map((cat) => (
             <button
-              key={category.id}
-              onClick={() => handleCategoryChange(category.id)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                currentCategoryId === category.id
-                  ? "bg-gray-900 text-white"
-                  : "bg-white text-gray-900 border border-gray-300 hover:bg-gray-50"
+              key={cat.id}
+              onClick={() =>
+                updateParams({
+                  categoryId: String(cat.id),
+                  category: null,
+                  page: null,
+                })
+              }
+              className={`transition-colors ${
+                currentCategoryId === cat.id || currentCategory === cat.name
+                  ? "text-gray-900 font-medium underline underline-offset-4"
+                  : "text-gray-400 hover:text-gray-700"
               }`}
             >
-              {category.name} ({category._count.posts})
+              {cat.name}
             </button>
           ))}
-        </div>
+        </nav>
 
-        {/* Articles Grid */}
+        {/* Articles */}
         {initialPosts.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-12">
               {initialPosts.map((post) => (
                 <Link
                   key={post.id}
                   href={`/articles/${post.slug}`}
-                  className="group transition-transform duration-300 hover:scale-105"
+                  className="group"
                 >
                   <ArticleCard
                     article={{
@@ -142,108 +147,54 @@ export default function BlogList({
               ))}
             </div>
 
-            {/* Pagination */}
+            {/* Pagination – calm & blog-like */}
             {pagination.totalPages > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-12">
-                {/* Previous Button */}
+              <div className="flex justify-between items-center mt-24 text-sm">
                 <button
-                  onClick={() => handlePageChange(pagination.page - 1)}
                   disabled={pagination.page === 1}
-                  className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  onClick={() =>
+                    updateParams({ page: String(pagination.page - 1) })
+                  }
+                  className="text-gray-500 hover:text-gray-900 disabled:opacity-30"
                 >
-                  Previous
+                  ← Newer posts
                 </button>
 
-                {/* Page Numbers */}
-                {Array.from(
-                  { length: pagination.totalPages },
-                  (_, i) => i + 1
-                ).map((page) => {
-                  // Show first, last, current, and adjacent pages
-                  const shouldShow =
-                    page === 1 ||
-                    page === pagination.totalPages ||
-                    Math.abs(page - pagination.page) <= 1;
+                <span className="text-gray-400">
+                  Page {pagination.page} of {pagination.totalPages}
+                </span>
 
-                  if (!shouldShow) {
-                    // Show ellipsis
-                    if (
-                      page === pagination.page - 2 ||
-                      page === pagination.page + 2
-                    ) {
-                      return (
-                        <span key={page} className="px-2 text-gray-500">
-                          ...
-                        </span>
-                      );
-                    }
-                    return null;
-                  }
-
-                  return (
-                    <button
-                      key={page}
-                      onClick={() => handlePageChange(page)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        pagination.page === page
-                          ? "bg-gray-900 text-white"
-                          : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  );
-                })}
-
-                {/* Next Button */}
                 <button
-                  onClick={() => handlePageChange(pagination.page + 1)}
                   disabled={pagination.page === pagination.totalPages}
-                  className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  onClick={() =>
+                    updateParams({ page: String(pagination.page + 1) })
+                  }
+                  className="text-gray-500 hover:text-gray-900 disabled:opacity-30"
                 >
-                  Next
+                  Older posts →
                 </button>
               </div>
             )}
 
-            {/* Results Info */}
-            <div className="text-center mt-6 text-sm text-gray-600">
-              Showing {(pagination.page - 1) * pagination.limit + 1} -{" "}
-              {Math.min(pagination.page * pagination.limit, pagination.total)}{" "}
-              of {pagination.total} posts
-            </div>
-
-            {/* Newsletter Section */}
-            <div className="mt-10 border-t border-gray-100 pt-4">
+            {/* Newsletter – personal invite */}
+            <div className="mt-28 border-t border-gray-100 pt-14">
               <Newsletter />
             </div>
           </>
         ) : (
-          <div className="space-y-12">
+          <div className="space-y-20">
             <EmptyState
-              title={currentSearch ? "No results found" : "No posts here yet"}
+              title={currentSearch ? "Nothing found" : "No notes yet"}
               message={
                 currentSearch
-                  ? `I couldn't find any matches for "${currentSearch}". Try different keywords or browse all categories.`
-                  : "This category doesn't have any posts yet. Why not explore my other stories?"
+                  ? `I couldn’t find anything matching “${currentSearch}”. Maybe try another word.`
+                  : "This space is still empty. Writing takes time — it’ll fill up."
               }
-              actionLabel={
-                currentSearch || currentCategoryId
-                  ? "View All Posts"
-                  : "Back to Home"
-              }
-              onAction={
-                currentSearch || currentCategoryId
-                  ? () => router.push("/articles")
-                  : undefined
-              }
-              actionHref={
-                !(currentSearch || currentCategoryId) ? "/" : undefined
-              }
+              actionLabel="View all writing"
+              onAction={() => updateParams({ categoryId: null, page: null })}
             />
 
-            {/* Newsletter even when empty */}
-            <div className="border-t border-gray-100 pt-8">
+            <div className="border-t border-gray-100 pt-14">
               <Newsletter />
             </div>
           </div>

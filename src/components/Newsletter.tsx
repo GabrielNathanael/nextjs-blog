@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 export default function Newsletter() {
   const [email, setEmail] = useState("");
@@ -37,6 +38,7 @@ export default function Newsletter() {
         });
       }
     } catch (error) {
+      console.error(error);
       setMessage({
         type: "error",
         text: "Something went wrong. Please try again.",
@@ -100,9 +102,12 @@ export default function Newsletter() {
 
             <p className="mt-4 text-xs text-gray-400">
               I care about your data. Read my{" "}
-              <a href="#" className="font-medium text-white hover:underline">
+              <Link
+                href="/privacy"
+                className="font-medium text-white hover:underline"
+              >
                 Privacy Policy
-              </a>
+              </Link>
               .
             </p>
           </div>

@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { UploadService } from "@/lib/services/upload.service";
 
-// POST /api/upload - Upload image to Cloudinary (protected)
+// POST /api/dashboard/upload - Upload image to Cloudinary (protected)
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -14,6 +14,8 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
+    const folder =
+      (formData.get("folder") as "thumbnails" | "content") || "content";
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -38,11 +40,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Upload to Cloudinary
-    const result = await UploadService.uploadImage(file);
+    const result = await UploadService.uploadImage(file, folder);
 
     return NextResponse.json(result);
   } catch (error: unknown) {
-    console.error("POST /api/upload error:", error);
+    console.error("POST /api/dashboard/upload error:", error);
     return NextResponse.json(
       {
         error:
@@ -53,7 +55,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// DELETE /api/upload - Delete image from Cloudinary (protected)
+// DELETE /api/dashboard/upload - Delete image from Cloudinary (protected)
 export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -76,7 +78,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error: unknown) {
-    console.error("DELETE /api/upload error:", error);
+    console.error("DELETE /api/dashboard/upload error:", error);
     return NextResponse.json(
       {
         error:

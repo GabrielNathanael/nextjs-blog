@@ -14,14 +14,23 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:reset": "prisma migrate reset",
-    "db:setup": "prisma generate && prisma db push && prisma db seed"
+    "db:setup": "prisma generate && prisma db push && prisma db seed",
+    "db:dev": "docker compose up -d && wait-on tcp:5432 && prisma studio"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "^7.2.0",
     "@radix-ui/react-navigation-menu": "^1.2.13",
     "@radix-ui/react-slot": "^1.2.3",
-    "@tailwindcss/typography": "^0.5.16",
+    "@tailwindcss/typography": "^0.5.19",
+    "@tanstack/react-table": "^8.21.3",
+    "@tiptap/extension-image": "^3.14.0",
+    "@tiptap/extension-link": "^3.14.0",
+    "@tiptap/extension-placeholder": "^3.14.0",
+    "@tiptap/extension-text-align": "^3.14.0",
+    "@tiptap/extension-underline": "^3.14.0",
+    "@tiptap/react": "^3.14.0",
+    "@tiptap/starter-kit": "^3.14.0",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.8.0",
@@ -51,7 +60,8 @@
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
     "tw-animate-css": "^1.3.6",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "wait-on": "^9.0.3"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"

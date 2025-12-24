@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ArticleCard from "./ArticleCard";
@@ -30,7 +29,6 @@ export default function CategorySection({
   categories = [],
 }: CategorySectionProps) {
   const router = useRouter();
-  const [selectedCategory, setSelectedCategory] = useState("All Categories");
 
   const displayCategories = [
     "All Categories",
@@ -38,8 +36,6 @@ export default function CategorySection({
   ];
 
   const handleCategoryClick = (catName: string) => {
-    setSelectedCategory(catName); // Tetap update state lokal agar UI berubah sebentar
-
     if (catName === "All Categories") {
       router.push("/articles");
       return;
@@ -50,11 +46,6 @@ export default function CategorySection({
       router.push(`/articles?categoryId=${category.id}`);
     }
   };
-
-  const filteredArticles =
-    selectedCategory === "All Categories"
-      ? articles
-      : articles.filter((a) => a.category.name === selectedCategory);
 
   return (
     <section className="bg-white py-12 md:py-16">
@@ -72,11 +63,7 @@ export default function CategorySection({
             <button
               key={index}
               onClick={() => handleCategoryClick(cat)}
-              className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition-colors ${
-                selectedCategory === cat
-                  ? "bg-gray-900 text-white"
-                  : "bg-white text-gray-900 border border-gray-300 hover:bg-gray-50"
-              }`}
+              className="px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition-colors bg-white text-gray-900 border border-gray-300 hover:bg-gray-50"
             >
               {cat}
             </button>
@@ -85,7 +72,7 @@ export default function CategorySection({
 
         {/* Grid Artikel */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
-          {filteredArticles.slice(0, 6).map((article) => (
+          {articles.slice(0, 6).map((article) => (
             <Link
               key={article.id}
               href={`/articles/${article.slug}`}

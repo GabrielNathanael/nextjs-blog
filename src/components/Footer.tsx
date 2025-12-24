@@ -1,26 +1,32 @@
-import { Github, Instagram } from "lucide-react";
+"use client";
+
+import Link from "next/link";
+import { Github, Instagram, Mail, Globe } from "lucide-react";
+
+// Static categories by NAME (matches DB category names)
+const FOOTER_CATEGORIES = ["Writing", "Learning", "Tech", "Notes", "Career"];
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-900 text-white py-12">
+    <footer className="bg-gray-900 text-white py-14">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Brand Section */}
-          <div className="col-span-1 md:col-span-2">
-            <h3 className="text-2xl font-bold mb-4">BinaryStories</h3>
-            <p className="text-gray-400 mb-4 max-w-md">
-              Your daily source of articles on technology, design, and more.
-              Discover insights, tutorials, and stories that matter.
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
+          {/* Brand */}
+          <div className="md:col-span-2">
+            <h3 className="text-2xl font-semibold mb-4">BinaryStories</h3>
+            <p className="text-gray-400 mb-6 max-w-md leading-relaxed">
+              Personal writing on technology, learning, and building things — a
+              place to think out loud and document the journey.
             </p>
-            <div className="flex space-x-4">
+
+            <div className="flex items-center gap-4">
               <a
                 href="https://github.com/GabrielNathanael"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-white transition-colors"
               >
-                <span className="sr-only">GitHub</span>
-                <Github className="w-6 h-6" />
+                <Github className="w-5 h-5" />
               </a>
               <a
                 href="https://www.instagram.com/gabrielnathanaelp/"
@@ -28,88 +34,82 @@ export default function Footer() {
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-white transition-colors"
               >
-                <span className="sr-only">Instagram</span>
-                <Instagram className="w-6 h-6" />
+                <Instagram className="w-5 h-5" />
+              </a>
+              <a
+                href="https://gabrielnathanael.site"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <Globe className="w-5 h-5" />
+              </a>
+              <a
+                href="mailto:gabrielnathanael81@gmail.com"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <Mail className="w-5 h-5" />
               </a>
             </div>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
-            <ul className="space-y-2">
+            <h4 className="text-sm font-semibold uppercase tracking-wide mb-4">
+              Quick Links
+            </h4>
+            <ul className="space-y-2 text-sm">
               <li>
-                <a
-                  href="#"
+                <Link
+                  href="/"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   Home
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#"
+                <Link
+                  href="/articles"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  Categories
-                </a>
+                  All Writing
+                </Link>
               </li>
               <li>
-                <a
-                  href="#"
+                <Link
+                  href="/privacy"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  Contact
-                </a>
+                  Privacy Policy
+                </Link>
               </li>
             </ul>
           </div>
 
-          {/* Categories */}
+          {/* Topics (static, filter by name) */}
           <div>
-            <h4 className="text-lg font-semibold mb-4">Categories</h4>
-            <ul className="space-y-2">
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  Technology
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  Design
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  Lifestyle
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  Finance
-                </a>
-              </li>
+            <h4 className="text-sm font-semibold uppercase tracking-wide mb-4">
+              Topics
+            </h4>
+            <ul className="space-y-2 text-sm">
+              {FOOTER_CATEGORIES.map((name) => (
+                <li key={name}>
+                  <Link
+                    href={`/articles?category=${encodeURIComponent(name)}`}
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    {name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
 
-        {/* Bottom Section */}
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center">
-          <p className="text-gray-400">
-            © 2025 BinaryStories. All rights reserved.
-          </p>
+        {/* Bottom */}
+        <div className="border-t border-gray-800 mt-12 pt-6 text-center text-sm text-gray-500">
+          © {new Date().getFullYear()} BinaryStories. Written by Gabriel
+          Nathanael.
         </div>
       </div>
     </footer>

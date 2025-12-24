@@ -107,7 +107,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
   }));
 
   return (
-    <div className="bg-white min-h-screen">
+    <div>
       <BlogDetailContent
         post={{
           title: post.title,

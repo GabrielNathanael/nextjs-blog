@@ -1,8 +1,10 @@
 import cloudinary from "@/lib/cloudinary";
 
+type UploadFolder = "thumbnails" | "content";
+
 export class UploadService {
   // Upload image to Cloudinary
-  static async uploadImage(file: File) {
+  static async uploadImage(file: File, folder: UploadFolder = "content") {
     try {
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
@@ -14,11 +16,11 @@ export class UploadService {
 
       // Upload to Cloudinary
       const result = await cloudinary.uploader.upload(base64Image, {
-        folder: "binarystories", // Organize in folder
+        folder: `binarystories/${folder}`,
         transformation: [
-          { width: 1200, height: 630, crop: "limit" }, // Limit max size
-          { quality: "auto" }, // Auto optimize quality
-          { fetch_format: "auto" }, // Auto format (webp if supported)
+          { width: 1200, height: 630, crop: "limit" },
+          { quality: "auto" },
+          { fetch_format: "auto" },
         ],
       });
 
@@ -48,10 +50,10 @@ export class UploadService {
   }
 
   // Upload image from URL (for drag & drop in rich text editor)
-  static async uploadFromUrl(url: string) {
+  static async uploadFromUrl(url: string, folder: UploadFolder = "content") {
     try {
       const result = await cloudinary.uploader.upload(url, {
-        folder: "binarystories",
+        folder: `binarystories/${folder}`,
         transformation: [
           { width: 1200, height: 630, crop: "limit" },
           { quality: "auto" },
