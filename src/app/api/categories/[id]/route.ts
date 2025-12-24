@@ -5,10 +5,11 @@ import { CategoryService } from "@/lib/services/category.service";
 // GET /api/categories/[id] - Get single category
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const category = await CategoryService.getCategoryById(parseInt(params.id));
+    const { id } = await params;
+    const category = await CategoryService.getCategoryById(parseInt(id));
 
     if (!category) {
       return NextResponse.json(

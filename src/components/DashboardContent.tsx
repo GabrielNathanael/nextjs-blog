@@ -10,6 +10,8 @@ import {
   EyeOff,
   ChevronDown,
   ChevronUp,
+  Mail,
+  Send,
 } from "lucide-react";
 import Image from "next/image";
 import {
@@ -35,6 +37,7 @@ interface Post {
   thumbnail: string;
   published: boolean;
   createdAt: string;
+  shortDesc: string;
   category: {
     id: number;
     name: string;
@@ -57,6 +60,11 @@ export default function DashboardContent() {
   // Preview State
   const [previewPost, setPreviewPost] = useState<Post | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  // Newsletter State
+  const [newsletterPost, setNewsletterPost] = useState<Post | null>(null);
+  const [isNewsletterModalOpen, setIsNewsletterModalOpen] = useState(false);
+  const [sendingNewsletter, setSendingNewsletter] = useState(false);
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -114,6 +122,43 @@ export default function DashboardContent() {
   const handlePreview = (post: Post) => {
     setPreviewPost(post);
     setIsPreviewOpen(true);
+  };
+
+  const openNewsletterModal = (post: Post) => {
+    setNewsletterPost(post);
+    setIsNewsletterModalOpen(true);
+  };
+
+  const confirmSendNewsletter = async () => {
+    if (!newsletterPost) return;
+
+    setSendingNewsletter(true);
+
+    try {
+      const res = await fetch("/api/newsletter/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId: newsletterPost.id }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to send newsletter");
+      }
+
+      alert(`✅ Newsletter sent to ${data.sentTo} subscribers!`);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        alert(`❌ ${err.message}`);
+      } else {
+        alert("An unknown error occurred");
+      }
+    } finally {
+      setSendingNewsletter(false);
+      setIsNewsletterModalOpen(false);
+      setNewsletterPost(null);
+    }
   };
 
   const columns = useMemo(
@@ -208,6 +253,15 @@ export default function DashboardContent() {
               >
                 <Edit size={16} />
               </Link>
+              {post.published && (
+                <button
+                  onClick={() => openNewsletterModal(post)}
+                  className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                  title="Send Newsletter"
+                >
+                  <Send size={16} />
+                </button>
+              )}
               <button
                 onClick={() => openDeleteModal(post.id)}
                 className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
@@ -419,6 +473,96 @@ export default function DashboardContent() {
               className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 transition-colors"
             >
               Delete
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Newsletter Confirmation Modal */}
+      <Modal
+        isOpen={isNewsletterModalOpen}
+        onClose={() => !sendingNewsletter && setIsNewsletterModalOpen(false)}
+        title="Send Newsletter"
+      >
+        <div className="space-y-4">
+          {newsletterPost && (
+            <>
+              <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                <div className="h-16 w-16 flex-shrink-0 relative rounded overflow-hidden">
+                  <Image
+                    src={newsletterPost.thumbnail}
+                    alt={newsletterPost.title}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-semibold text-gray-900 line-clamp-2">
+                    {newsletterPost.title}
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {newsletterPost.category.name}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 p-3 rounded-lg">
+                <Mail size={16} />
+                <span>
+                  This will send an email newsletter to all subscribers
+                </span>
+              </div>
+
+              <p className="text-sm text-gray-600">
+                Are you sure you want to send this post as a newsletter to all
+                subscribers?
+              </p>
+            </>
+          )}
+
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setIsNewsletterModalOpen(false)}
+              disabled={sendingNewsletter}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmSendNewsletter}
+              disabled={sendingNewsletter}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {sendingNewsletter ? (
+                <>
+                  <svg
+                    className="animate-spin h-4 w-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send size={16} />
+                  Send Newsletter
+                </>
+              )}
             </button>
           </div>
         </div>

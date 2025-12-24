@@ -7,15 +7,18 @@ import { PostService } from "@/lib/services/post.service";
 // POST /api/newsletter/send - Send newsletter about a post (protected)
 export async function POST(request: NextRequest) {
   try {
+    // Check authentication
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Get request body
     const body = await request.json();
     const { postId } = body;
 
+    // Validate postId
     if (!postId) {
       return NextResponse.json({ error: "Post ID required" }, { status: 400 });
     }
@@ -35,26 +38,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send newsletter
-    const result = await NewsletterService.sendPostNewsletter({
+    // Prepare post data for newsletter
+    const newsletterData = {
       title: post.title,
       slug: post.slug,
       shortDesc: post.shortDesc,
       thumbnail: post.thumbnail,
       author: { name: post.author.name },
       category: { name: post.category.name },
-    });
+    };
+
+    // Send newsletter
+    const result = await NewsletterService.sendPostNewsletter(newsletterData);
 
     if (!result.success) {
       return NextResponse.json(
-        { error: (result as any).error || "Failed to send newsletter" },
+        { error: result.error || "Failed to send newsletter" },
         { status: 400 }
       );
     }
 
     return NextResponse.json({
       success: true,
-      message: `Newsletter sent to ${result.sentTo} subscribers`,
+      message: `Newsletter sent successfully to ${result.sentTo} subscribers`,
       sentTo: result.sentTo,
     });
   } catch (error: unknown) {

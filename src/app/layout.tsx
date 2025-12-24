@@ -1,5 +1,6 @@
 import "./globals.css";
 import { Manrope } from "next/font/google";
+import { Analytics } from "@vercel/analytics/react";
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -22,7 +23,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={manrope.className}>
-      <body className="bg-gray-50 min-h-screen">{children}</body>
+      <body className="bg-gray-50 min-h-screen">
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
