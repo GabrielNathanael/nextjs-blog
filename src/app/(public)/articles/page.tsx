@@ -1,6 +1,3 @@
-// ================================
-// app/articles/page.tsx
-// ================================
 import BlogList from "@/components/BlogList";
 
 export const revalidate = 60;
@@ -21,7 +18,7 @@ async function getCategories() {
 
 async function getPosts(params: {
   categoryId?: string;
-  category?: string; // NEW: support category by name
+  category?: string;
   page?: string;
   search?: string;
 }) {
@@ -61,7 +58,7 @@ export default async function BlogPage({
 }: {
   searchParams: {
     categoryId?: string;
-    category?: string; // NEW
+    category?: string;
     page?: string;
     search?: string;
   };
@@ -85,71 +82,4 @@ export default async function BlogPage({
       />
     </div>
   );
-}
-
-// ================================
-// app/api/posts/route.ts
-// ================================
-import { NextRequest, NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
-import prisma from "@/lib/prisma";
-
-export async function GET(req: NextRequest) {
-  try {
-    const { searchParams } = new URL(req.url);
-
-    const page = Number(searchParams.get("page") ?? 1);
-    const limit = Number(searchParams.get("limit") ?? 9);
-    const categoryId = searchParams.get("categoryId");
-    const category = searchParams.get("category"); // NEW
-    const search = searchParams.get("search");
-
-    const where: Prisma.PostWhereInput = {
-      published: true,
-    };
-
-    // Priority: categoryId > category(name)
-    if (categoryId) {
-      where.categoryId = Number(categoryId);
-    } else if (category) {
-      where.category = { name: category };
-    }
-
-    if (search) {
-      where.OR = [
-        { title: { contains: search, mode: "insensitive" } },
-        { shortDesc: { contains: search, mode: "insensitive" } },
-      ];
-    }
-
-    const [total, posts] = await Promise.all([
-      prisma.post.count({ where }),
-      prisma.post.findMany({
-        where,
-        include: {
-          category: true,
-          author: true,
-        },
-        orderBy: { createdAt: "desc" },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-    ]);
-
-    return NextResponse.json({
-      posts,
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    });
-  } catch (error) {
-    console.error("GET /api/posts error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch posts" },
-      { status: 500 }
-    );
-  }
 }
