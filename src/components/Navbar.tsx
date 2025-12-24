@@ -155,14 +155,14 @@ export default function Navbar() {
                   Articles
                 </Link>
               </div>
-              <div className="block py-2 text-gray-700 hover:text-gray-900 font-medium text-sm cursor-pointer">
+              {/* <div className="block py-2 text-gray-700 hover:text-gray-900 font-medium text-sm cursor-pointer">
                 <Link
                   href="#contact"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Contact
                 </Link>
-              </div>
+              </div> */}
               {/* <button className="block w-full text-left py-2 text-gray-700 hover:text-gray-900 font-medium text-sm">
                 Login
               </button>

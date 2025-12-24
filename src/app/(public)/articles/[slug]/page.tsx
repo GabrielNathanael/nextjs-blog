@@ -10,7 +10,7 @@ interface Post {
   thumbnail: string;
   shortDesc: string;
   createdAt: string;
-  author: { name: string };
+  author: { id: number; name: string };
   category: { id: number; name: string };
 }
 
@@ -38,12 +38,13 @@ async function getPostBySlug(slug: string): Promise<Post | null> {
 
 async function getRelatedPosts(
   postId: number,
-  categoryId: number
+  categoryId: number,
+  authorId: number
 ): Promise<Post[]> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
     const res = await fetch(
-      `${baseUrl}/api/posts?categoryId=${categoryId}&limit=3`,
+      `${baseUrl}/api/related-posts?postId=${postId}&categoryId=${categoryId}&authorId=${authorId}&limit=3`,
       {
         next: { revalidate: 300 }, // Cache for 5 minutes
       }
@@ -54,9 +55,7 @@ async function getRelatedPosts(
     }
 
     const data = await res.json();
-
-    // Filter out current post
-    return data.posts.filter((p: Post) => p.id !== postId).slice(0, 3);
+    return data;
   } catch (error) {
     console.error("Related posts fetch error:", error);
     return [];
@@ -92,7 +91,11 @@ export default async function BlogDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const relatedPosts = await getRelatedPosts(post.id, post.category.id);
+  const relatedPosts = await getRelatedPosts(
+    post.id,
+    post.category.id,
+    post.author.id
+  );
 
   // Map to the structure expected by RelatedPosts component if necessary
   // Although structural typing usually works, we explicitly map to be safe and clean

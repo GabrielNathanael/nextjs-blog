@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 import TipTapEditor from "@/components/TipTapEditor";
+import PostPreviewModal from "./PostPreviewModal";
 import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -19,9 +21,11 @@ interface PostEditorProps {
 
 export default function PostEditor({ postId }: PostEditorProps) {
   const router = useRouter();
+  const { data: session } = useSession();
 
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(!!postId);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState("");
 
@@ -353,6 +357,13 @@ export default function PostEditor({ postId }: PostEditorProps) {
 
         {/* Submit Button */}
         <div className="flex justify-end gap-4">
+          <button
+            type="button"
+            onClick={() => setIsPreviewOpen(true)}
+            className="px-6 py-2 bg-gray-100 text-gray-700 border border-transparent rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            Preview
+          </button>
           <Link
             href="/dashboard"
             className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
@@ -375,6 +386,21 @@ export default function PostEditor({ postId }: PostEditorProps) {
           </button>
         </div>
       </form>
+
+      <PostPreviewModal
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        data={{
+          title: formData.title,
+          content: formData.content,
+          thumbnail: thumbnailPreview || formData.thumbnail,
+          category:
+            categories.find((c) => c.id.toString() === formData.categoryId)
+              ?.name || "",
+          author: session?.user?.name || "Anonymous",
+          createdAt: new Date().toISOString(),
+        }}
+      />
     </div>
   );
 }

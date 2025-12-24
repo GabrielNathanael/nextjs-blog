@@ -1,6 +1,11 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
+import {
+  useEditor,
+  EditorContent,
+  NodeViewWrapper,
+  ReactNodeViewRenderer,
+} from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
@@ -30,6 +35,41 @@ import {
 } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 
+import NextImage from "next/image";
+import { NodeViewProps } from "@tiptap/core";
+
+// Custom Image Node View with Resize Controls
+const ImageResizeComponent = ({ node, updateAttributes }: NodeViewProps) => {
+  return (
+    <NodeViewWrapper className="relative inline-block leading-none group max-w-full">
+      <NextImage
+        src={node.attrs.src}
+        alt={node.attrs.alt || ""}
+        width={0}
+        height={0}
+        sizes="100vw"
+        style={{ width: node.attrs.width, height: "auto" }}
+        className="rounded-lg max-w-full object-contain transition-all duration-200"
+      />
+      {/* Overlay Controls - Visible on Hover */}
+      <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm rounded-lg p-1.5 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto">
+        {(["25%", "50%", "75%", "100%"] as const).map((width) => (
+          <button
+            key={width}
+            type="button"
+            onClick={() => updateAttributes({ width })}
+            className={`px-2 py-1 text-[10px] font-bold rounded hover:bg-white/20 text-white ${
+              node.attrs.width === width ? "bg-white/30" : ""
+            }`}
+          >
+            {width}
+          </button>
+        ))}
+      </div>
+    </NodeViewWrapper>
+  );
+};
+
 interface TiptapEditorProps {
   content: string;
   onChange: (html: string) => void;
@@ -44,7 +84,28 @@ export default function TiptapEditor({ content, onChange }: TiptapEditorProps) {
     extensions: [
       StarterKit,
       Underline,
-      Image.configure({
+      Image.extend({
+        addAttributes() {
+          return {
+            ...this.parent?.(),
+            width: {
+              default: "100%",
+              parseHTML: (element) => element.style.width,
+              renderHTML: (attributes) => {
+                if (!attributes.width) {
+                  return {};
+                }
+                return {
+                  style: `width: ${attributes.width}`,
+                };
+              },
+            },
+          };
+        },
+        addNodeView() {
+          return ReactNodeViewRenderer(ImageResizeComponent);
+        },
+      }).configure({
         HTMLAttributes: {
           class: "max-w-full h-auto rounded-lg",
         },
@@ -172,12 +233,14 @@ export default function TiptapEditor({ content, onChange }: TiptapEditorProps) {
 
   return (
     <div className="border border-gray-300 rounded-lg overflow-hidden relative">
-      {/* Loading Indicator - Compact */}
+      {/* Loading Indicator - Centered Overlay */}
       {uploading && (
-        <div className="absolute top-4 right-4 z-50">
-          <div className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
-            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-            <span className="text-sm font-medium">Uploading...</span>
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/50 backdrop-blur-sm transition-all">
+          <div className="bg-white px-6 py-4 rounded-xl shadow-2xl flex flex-col items-center gap-3 border border-gray-100">
+            <div className="animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
+            <span className="text-sm font-semibold text-gray-700">
+              Uploading image...
+            </span>
           </div>
         </div>
       )}
@@ -379,6 +442,7 @@ export default function TiptapEditor({ content, onChange }: TiptapEditorProps) {
         {/* Undo/Redo */}
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().undo().run()}
           disabled={!editor.can().undo()}
           className="p-2 rounded hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
@@ -388,6 +452,7 @@ export default function TiptapEditor({ content, onChange }: TiptapEditorProps) {
         </button>
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().redo().run()}
           disabled={!editor.can().redo()}
           className="p-2 rounded hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"

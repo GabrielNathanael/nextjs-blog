@@ -87,8 +87,11 @@ export class PostService {
 
   // Get single post by slug
   static async getPostBySlug(slug: string) {
-    const post = await prisma.post.findUnique({
-      where: { slug },
+    const post = await prisma.post.findFirst({
+      where: {
+        slug,
+        published: true,
+      },
       include: {
         author: {
           select: { id: true, name: true },
@@ -166,9 +169,15 @@ export class PostService {
     return { success: true };
   }
 
-  // Get related posts (same category, exclude current)
-  static async getRelatedPosts(postId: number, categoryId: number, limit = 3) {
-    const posts = await prisma.post.findMany({
+  // Get related posts (same category, exclude current) - with author fallback
+  static async getRelatedPosts(
+    postId: number,
+    categoryId: number,
+    authorId: number,
+    limit = 3
+  ) {
+    // 1. Try to fetch from same category
+    let posts = await prisma.post.findMany({
       where: {
         categoryId,
         published: true,
@@ -185,6 +194,34 @@ export class PostService {
         },
       },
     });
+
+    // 2. If we don't have enough posts, fallback to same author
+    if (posts.length < limit) {
+      const existingIds = posts.map((p) => p.id);
+      existingIds.push(postId); // Ensure current post is also excluded
+
+      const remainingLimit = limit - posts.length;
+
+      const authorPosts = await prisma.post.findMany({
+        where: {
+          authorId,
+          published: true,
+          id: { notIn: existingIds },
+        },
+        take: remainingLimit,
+        orderBy: { createdAt: "desc" },
+        include: {
+          author: {
+            select: { id: true, name: true },
+          },
+          category: {
+            select: { id: true, name: true },
+          },
+        },
+      });
+
+      posts = [...posts, ...authorPosts];
+    }
 
     return posts;
   }

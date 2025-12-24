@@ -124,19 +124,23 @@ export default function BlogDetailContent({ post }: BlogDetailContentProps) {
       </header>
 
       {/* Featured Image */}
-      <div className="relative w-full h-64 md:h-[500px] mb-8 rounded-lg overflow-hidden">
+      <div className="w-full mb-8 rounded-lg overflow-hidden shadow-lg">
         <Image
           src={post.thumbnail}
           alt={post.title}
-          fill
-          className="object-cover"
+          width={0}
+          height={0}
+          sizes="100vw"
+          style={{ width: "100%", height: "auto" }}
+          className="max-h-[400px] object-cover"
           priority
+          loading="eager"
         />
       </div>
 
       {/* Article Content */}
       <div
-        className="prose prose-lg max-w-none prose-headings:font-bold prose-headings:text-gray-900 prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-img:rounded-lg"
+        className="prose prose-lg max-w-none prose-headings:font-bold prose-headings:text-gray-900 prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-img:rounded-lg [&_img]:!mx-auto [&_img]:!block [&_img]:!my-8"
         dangerouslySetInnerHTML={{ __html: post.content }}
       />
 

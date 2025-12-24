@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
   Plus,
@@ -24,10 +24,14 @@ import {
   ColumnFiltersState,
 } from "@tanstack/react-table";
 
+import Modal from "@/components/Modal";
+import PostPreviewModal from "@/components/PostPreviewModal";
+
 interface Post {
   id: number;
   title: string;
   slug: string;
+  content: string;
   thumbnail: string;
   published: boolean;
   createdAt: string;
@@ -48,6 +52,12 @@ export default function DashboardContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  // Preview State
+  const [previewPost, setPreviewPost] = useState<Post | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -73,18 +83,22 @@ export default function DashboardContent() {
     }
   };
 
-  const handleDelete = useCallback(async (id: number) => {
-    if (!confirm("Are you sure you want to delete this post?")) return;
-
+  const openDeleteModal = (id: number) => {
     setDeleteId(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+
     try {
-      const res = await fetch(`/api/dashboard/posts/${id}`, {
+      const res = await fetch(`/api/dashboard/posts/${deleteId}`, {
         method: "DELETE",
       });
 
       if (!res.ok) throw new Error("Failed to delete post");
 
-      setPosts((prev) => prev.filter((post) => post.id !== id));
+      setPosts((prev) => prev.filter((post) => post.id !== deleteId));
     } catch (err: unknown) {
       if (err instanceof Error) {
         alert(err.message);
@@ -93,8 +107,14 @@ export default function DashboardContent() {
       }
     } finally {
       setDeleteId(null);
+      setIsDeleteModalOpen(false);
     }
-  }, []);
+  };
+
+  const handlePreview = (post: Post) => {
+    setPreviewPost(post);
+    setIsPreviewOpen(true);
+  };
 
   const columns = useMemo(
     () => [
@@ -103,8 +123,8 @@ export default function DashboardContent() {
         cell: (info) => {
           const post = info.row.original;
           return (
-            <div className="flex items-center">
-              <div className="h-12 w-12 flex-shrink-0 relative rounded overflow-hidden">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 flex-shrink-0 relative rounded overflow-hidden bg-gray-100">
                 <Image
                   src={post.thumbnail}
                   alt={post.title}
@@ -112,11 +132,11 @@ export default function DashboardContent() {
                   className="object-cover"
                 />
               </div>
-              <div className="ml-4">
-                <div className="text-sm font-medium text-gray-900">
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-gray-900 truncate">
                   {post.title}
                 </div>
-                <div className="text-sm text-gray-500">
+                <div className="text-xs text-gray-500 truncate">
                   by {post.author.name}
                 </div>
               </div>
@@ -127,7 +147,7 @@ export default function DashboardContent() {
       columnHelper.accessor("category.name", {
         header: "Category",
         cell: (info) => (
-          <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
             {info.getValue()}
           </span>
         ),
@@ -138,22 +158,22 @@ export default function DashboardContent() {
           const published = info.getValue();
           return (
             <span
-              className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
                 published
-                  ? "bg-green-100 text-green-800"
-                  : "bg-gray-100 text-gray-800"
+                  ? "bg-green-50 text-green-700"
+                  : "bg-gray-100 text-gray-600"
               }`}
             >
               {published ? (
-                <span className="flex items-center gap-1">
+                <>
                   <Eye size={12} />
                   Published
-                </span>
+                </>
               ) : (
-                <span className="flex items-center gap-1">
+                <>
                   <EyeOff size={12} />
                   Draft
-                </span>
+                </>
               )}
             </span>
           );
@@ -162,37 +182,45 @@ export default function DashboardContent() {
       columnHelper.accessor("createdAt", {
         header: "Date",
         cell: (info) => (
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-gray-600">
             {new Date(info.getValue()).toLocaleDateString()}
           </span>
         ),
       }),
       columnHelper.display({
         id: "actions",
-        header: "Actions",
+        header: () => <div className="text-right">Actions</div>,
         cell: (info) => {
           const post = info.row.original;
           return (
-            <div className="flex items-center justify-end gap-2">
+            <div className="flex items-center justify-end gap-1">
+              <button
+                onClick={() => handlePreview(post)}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                title="Preview Post"
+              >
+                <Eye size={16} />
+              </button>
               <Link
                 href={`/dashboard/editor/${post.id}`}
-                className="text-blue-600 hover:text-blue-900"
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                title="Edit Post"
               >
-                <Edit size={18} />
+                <Edit size={16} />
               </Link>
               <button
-                onClick={() => handleDelete(post.id)}
-                disabled={deleteId === post.id}
-                className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                onClick={() => openDeleteModal(post.id)}
+                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                title="Delete Post"
               >
-                <Trash2 size={18} />
+                <Trash2 size={16} />
               </button>
             </div>
           );
         },
       }),
     ],
-    [deleteId, handleDelete]
+    []
   );
 
   const table = useReactTable({
@@ -220,14 +248,14 @@ export default function DashboardContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500">Loading posts...</div>
+        <div className="text-sm text-gray-500">Loading posts...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
+      <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-lg">
         {error}
       </div>
     );
@@ -235,28 +263,28 @@ export default function DashboardContent() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Posts</h1>
-          <p className="text-gray-600 mt-1">Manage your blog posts</p>
+          <h1 className="text-xl font-semibold text-gray-900">Posts</h1>
+          <p className="text-sm text-gray-600 mt-0.5">Manage your blog posts</p>
         </div>
         <Link
           href="/dashboard/editor"
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 bg-black text-white text-sm px-4 py-2 rounded-md hover:bg-gray-800 transition-colors"
         >
-          <Plus size={20} />
-          Create New Post
+          <Plus size={16} />
+          New Post
         </Link>
       </div>
 
       {posts.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-12 text-center">
-          <p className="text-gray-500 mb-4">No posts yet</p>
+        <div className="bg-white border border-gray-200 rounded-lg p-12 text-center">
+          <p className="text-sm text-gray-500 mb-4">No posts yet</p>
           <Link
             href="/dashboard/editor"
-            className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center gap-2 bg-black text-white text-sm px-4 py-2 rounded-md hover:bg-gray-800 transition-colors"
           >
-            <Plus size={20} />
+            <Plus size={16} />
             Create Your First Post
           </Link>
         </div>
@@ -268,11 +296,11 @@ export default function DashboardContent() {
               value={globalFilter ?? ""}
               onChange={(e) => setGlobalFilter(e.target.value)}
               placeholder="Search posts..."
-              className="w-full max-w-sm px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full max-w-sm text-sm px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
             />
           </div>
 
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -280,13 +308,13 @@ export default function DashboardContent() {
                     {headerGroup.headers.map((header) => (
                       <th
                         key={header.id}
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                       >
                         {header.isPlaceholder ? null : (
                           <div
                             className={
                               header.column.getCanSort()
-                                ? "cursor-pointer select-none flex items-center gap-2"
+                                ? "cursor-pointer select-none flex items-center gap-1 hover:text-gray-900"
                                 : ""
                             }
                             onClick={header.column.getToggleSortingHandler()}
@@ -296,14 +324,14 @@ export default function DashboardContent() {
                               header.getContext()
                             )}
                             {header.column.getCanSort() && (
-                              <span>
+                              <span className="text-gray-400">
                                 {header.column.getIsSorted() === "asc" ? (
-                                  <ChevronUp size={16} />
+                                  <ChevronUp size={14} />
                                 ) : header.column.getIsSorted() === "desc" ? (
-                                  <ChevronDown size={16} />
+                                  <ChevronDown size={14} />
                                 ) : (
                                   <ChevronDown
-                                    size={16}
+                                    size={14}
                                     className="opacity-30"
                                   />
                                 )}
@@ -320,7 +348,7 @@ export default function DashboardContent() {
                 {table.getRowModel().rows.map((row) => (
                   <tr key={row.id} className="hover:bg-gray-50">
                     {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-6 py-4 whitespace-nowrap">
+                      <td key={cell.id} className="px-4 py-3 whitespace-nowrap">
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext()
@@ -335,7 +363,7 @@ export default function DashboardContent() {
 
           {/* Pagination */}
           <div className="flex items-center justify-between mt-4">
-            <div className="text-sm text-gray-700">
+            <div className="text-xs text-gray-600">
               Showing{" "}
               {table.getState().pagination.pageIndex *
                 table.getState().pagination.pageSize +
@@ -352,20 +380,68 @@ export default function DashboardContent() {
               <button
                 onClick={() => table.previousPage()}
                 disabled={!table.getCanPreviousPage()}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Previous
               </button>
               <button
                 onClick={() => table.nextPage()}
                 disabled={!table.getCanNextPage()}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Next
               </button>
             </div>
           </div>
         </>
+      )}
+
+      {/* Delete Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Delete Post"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Are you sure you want to delete this post? This action cannot be
+            undone.
+          </p>
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setIsDeleteModalOpen(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmDelete}
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Preview Modal */}
+      {previewPost && (
+        <PostPreviewModal
+          isOpen={isPreviewOpen}
+          onClose={() => {
+            setIsPreviewOpen(false);
+            setPreviewPost(null);
+          }}
+          data={{
+            title: previewPost.title,
+            content: previewPost.content,
+            thumbnail: previewPost.thumbnail,
+            category: previewPost.category.name,
+            author: previewPost.author.name,
+            createdAt: previewPost.createdAt,
+            slug: previewPost.slug,
+          }}
+        />
       )}
     </div>
   );
